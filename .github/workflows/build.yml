@@ -1,0 +1,58 @@
+name: Build Multi-Platform Packages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build JAR with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Build jpackage for ${{ matrix.os }}
+        run: |
+          case ${{ matrix.os }} in
+            macos-latest)
+              jpackage --type app-image --input target-tool.jar --main-jar target-tool.jar --name TargetTool --dest output
+              ;;
+            ubuntu-latest)
+              jpackage --type deb --input target-tool.jar --main-jar target-tool.jar --name TargetTool --dest output
+              ;;
+            windows-latest)
+              jpackage --type msi --input target-tool.jar --main-jar target-tool.jar --name TargetTool --dest output
+              ;;
+          esac
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TargetTool-${{ matrix.os }}
+          path: output/*
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: ls -la artifacts/
