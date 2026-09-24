@@ -25,20 +25,20 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean package -DskipTests
 
-      - name: Copy JAR to root
-        run: cp target/target-tool-*.jar target-tool.jar
+      - name: Prepare clean input directory
+        run: mkdir input && cp target/target-tool-*.jar input/target-tool.jar
 
       - name: Build macOS app-image
         if: matrix.os == 'macos-latest'
-        run: jpackage --type app-image --input . --main-jar target-tool.jar --name TargetTool -d out-macos
+        run: jpackage --type app-image --input input --main-jar target-tool.jar --name TargetTool -d out-macos
 
       - name: Build Ubuntu deb
         if: matrix.os == 'ubuntu-latest'
-        run: jpackage --type deb --input . --main-jar target-tool.jar --name TargetTool -d out-ubuntu
+        run: jpackage --type deb --input input --main-jar target-tool.jar --name TargetTool -d out-ubuntu
 
       - name: Build Windows msi
         if: matrix.os == 'windows-latest'
-        run: jpackage --type msi --input . --main-jar target-tool.jar --name TargetTool -d out-windows
+        run: jpackage --type msi --input input --main-jar target-tool.jar --name TargetTool -d out-windows
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
