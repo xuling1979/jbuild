@@ -30,21 +30,21 @@ jobs:
 
       - name: Build macOS app-image
         if: matrix.os == 'macos-latest'
-        run: jpackage --type app-image --input . --main-jar target-tool.jar --name TargetTool --dest out-${{ matrix.os }}
+        run: jpackage --type app-image --input . --main-jar target-tool.jar --name TargetTool -d out-macos
 
       - name: Build Ubuntu deb
         if: matrix.os == 'ubuntu-latest'
-        run: jpackage --type deb --input . --main-jar target-tool.jar --name TargetTool --dest out-${{ matrix.os }}
+        run: jpackage --type deb --input . --main-jar target-tool.jar --name TargetTool -d out-ubuntu
 
       - name: Build Windows msi
         if: matrix.os == 'windows-latest'
-        run: jpackage --type msi --input . --main-jar target-tool.jar --name TargetTool --dest out-${{ matrix.os }}
+        run: jpackage --type msi --input . --main-jar target-tool.jar --name TargetTool -d out-windows
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: TargetTool-${{ matrix.os }}
-          path: out-${{ matrix.os }}/*
+          path: out-*/*
 
   test:
     needs: build
