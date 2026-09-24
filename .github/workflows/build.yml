@@ -25,17 +25,20 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean package -DskipTests
 
+      - name: Copy JAR to root
+        run: cp target/${{ github.event.repository.name }}-*.jar target-tool.jar
+
       - name: Build jpackage for ${{ matrix.os }}
         run: |
           case ${{ matrix.os }} in
             macos-latest)
-              jpackage --type app-image --input target-tool.jar --main-jar target-tool.jar --name TargetTool --dest output
+              jpackage --type app-image --input . --main-jar target-tool.jar --name TargetTool --dest output
               ;;
             ubuntu-latest)
-              jpackage --type deb --input target-tool.jar --main-jar target-tool.jar --name TargetTool --dest output
+              jpackage --type deb --input . --main-jar target-tool.jar --name TargetTool --dest output
               ;;
             windows-latest)
-              jpackage --type msi --input target-tool.jar --main-jar target-tool.jar --name TargetTool --dest output
+              jpackage --type msi --input . --main-jar target-tool.jar --name TargetTool --dest output
               ;;
           esac
 
