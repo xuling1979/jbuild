@@ -16,18 +16,7 @@
     </properties>
 
     <build>
-        <sourceDirectory>${project.basedir}</sourceDirectory>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <includes>
-                        <include>com/example/**/*.java</include>
-                    </includes>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
