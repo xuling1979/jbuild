@@ -28,19 +28,17 @@ jobs:
       - name: Copy JAR to root
         run: cp target/target-tool-*.jar target-tool.jar
 
-      - name: Build jpackage for ${{ matrix.os }}
-        run: |
-          case ${{ matrix.os }} in
-            macos-latest)
-              jpackage --type app-image --input . --main-jar target-tool.jar --name TargetTool --dest output
-              ;;
-            ubuntu-latest)
-              jpackage --type deb --input . --main-jar target-tool.jar --name TargetTool --dest output
-              ;;
-            windows-latest)
-              jpackage --type msi --input . --main-jar target-tool.jar --name TargetTool --dest output
-              ;;
-          esac
+      - name: Build macOS app-image
+        if: matrix.os == 'macos-latest'
+        run: jpackage --type app-image --input . --main-jar target-tool.jar --name TargetTool --dest output
+
+      - name: Build Ubuntu deb
+        if: matrix.os == 'ubuntu-latest'
+        run: jpackage --type deb --input . --main-jar target-tool.jar --name TargetTool --dest output
+
+      - name: Build Windows msi
+        if: matrix.os == 'windows-latest'
+        run: jpackage --type msi --input . --main-jar target-tool.jar --name TargetTool --dest output
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
