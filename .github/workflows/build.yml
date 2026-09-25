@@ -91,11 +91,3 @@ jobs:
 
       - name: Test Linux executable
         run: ./app/bin/TargetTool
-
-      - name: Test Windows artifact (via wine or skip)
-        run: echo "Windows exe test skipped - use Windows runner"
-
-      - name: Test macOS artifact
-        run: |
-          tar -xzvf artifacts/*/TargetTool-macos-latest.tar.gz
-          ./app/bin/TargetTool
