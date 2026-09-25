@@ -27,9 +27,9 @@ jobs:
 
       - name: Build jlink for ${{ matrix.os }}
         run: |
-          mkdir -p app/jre
           case ${{ matrix.os }} in
             macos-latest)
+              mkdir -p app/jre
               jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
               mkdir -p app/bin
               echo '#!/bin/bash' > app/bin/TargetTool
@@ -39,6 +39,7 @@ jobs:
               cp target/target-tool-1.0.0.jar app/
               ;;
             ubuntu-latest)
+              mkdir -p app/jre
               jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
               mkdir -p app/bin
               echo '#!/bin/bash' > app/bin/TargetTool
@@ -48,6 +49,7 @@ jobs:
               cp target/target-tool-1.0.0.jar app/
               ;;
             windows-latest)
+              mkdir -p app/jre
               jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
               mkdir -p app/bin
               echo '@echo off' > app/bin/TargetTool.bat
