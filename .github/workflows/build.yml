@@ -1,4 +1,4 @@
-name: Build Multi-Platform Packages
+name: Build with jlink
 
 on:
   push:
@@ -25,26 +25,54 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean package -DskipTests
 
-      - name: Prepare clean input directory
-        run: mkdir input && cp target/target-tool-*.jar input/target-tool.jar
+      - name: Build jlink for ${{ matrix.os }}
+        run: |
+          mkdir -p app/jre
+          case ${{ matrix.os }} in
+            macos-latest)
+              jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+              mkdir -p app/bin
+              echo '#!/bin/bash' > app/bin/TargetTool
+              echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
+              echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
+              chmod +x app/bin/TargetTool
+              cp target/target-tool-1.0.0.jar app/
+              ;;
+            ubuntu-latest)
+              jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+              mkdir -p app/bin
+              echo '#!/bin/bash' > app/bin/TargetTool
+              echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
+              echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
+              chmod +x app/bin/TargetTool
+              cp target/target-tool-1.0.0.jar app/
+              ;;
+            windows-latest)
+              jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+              mkdir -p app/bin
+              echo '@echo off' > app/bin/TargetTool.bat
+              echo 'set DIR=%~dp0' >> app/bin/TargetTool.bat
+              echo 'call "%DIR%jre\bin\java.exe" -jar "%DIR%..\target-tool-1.0.0.jar" %*' >> app/bin/TargetTool.bat
+              cp target/target-tool-1.0.0.jar app/
+              ;;
+          esac
 
-      - name: Build macOS app-image
-        if: matrix.os == 'macos-latest'
-        run: jpackage --type app-image --input input --main-jar target-tool.jar --name TargetTool -d out-macos
-
-      - name: Build Ubuntu deb
-        if: matrix.os == 'ubuntu-latest'
-        run: jpackage --type deb --input input --main-jar target-tool.jar --name TargetTool -d out-ubuntu
-
-      - name: Build Windows msi
-        if: matrix.os == 'windows-latest'
-        run: jpackage --type msi --input input --main-jar target-tool.jar --name TargetTool -d out-windows
+      - name: Create archive
+        run: |
+          case ${{ matrix.os }} in
+            macos-latest|ubuntu-latest)
+              tar -czvf TargetTool-${{ matrix.os }}.tar.gz app/
+              ;;
+            windows-latest)
+              powershell -Command "Compress-Archive -Path app -DestinationPath TargetTool-windows-latest.zip"
+              ;;
+          esac
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: TargetTool-${{ matrix.os }}
-          path: out-*/*
+          name: TargetTool-${{ matrix.os }}-jlink
+          path: TargetTool-*.tar.gz TargetTool-*.zip 2>/dev/null || out-*/*
 
   test:
     needs: build
@@ -57,3 +85,17 @@ jobs:
 
       - name: List artifacts
         run: ls -la artifacts/
+
+      - name: Extract Linux artifact
+        run: tar -xzvf artifacts/*/TargetTool-ubuntu-latest.tar.gz
+
+      - name: Test Linux executable
+        run: ./app/bin/TargetTool
+
+      - name: Test Windows artifact (via wine or skip)
+        run: echo "Windows exe test skipped - use Windows runner"
+
+      - name: Test macOS artifact
+        run: |
+          tar -xzvf artifacts/*/TargetTool-macos-latest.tar.gz
+          ./app/bin/TargetTool
