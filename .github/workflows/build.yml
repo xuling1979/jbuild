@@ -25,40 +25,46 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean package -DskipTests
 
-      - name: Build jlink for ${{ matrix.os }}
+      - name: Build and package on macOS
+        if: matrix.os == 'macos-latest'
         run: |
           rm -rf app
-          case ${{ matrix.os }} in
-            macos-latest)
-              mkdir -p app/jre
-              jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
-              mkdir -p app/bin
-              echo '#!/bin/bash' > app/bin/TargetTool
-              echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
-              echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
-              chmod +x app/bin/TargetTool
-              cp target/target-tool-1.0.0.jar app/
-              ;;
-            ubuntu-latest)
-              mkdir -p app/jre
-              jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
-              mkdir -p app/bin
-              echo '#!/bin/bash' > app/bin/TargetTool
-              echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
-              echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
-              chmod +x app/bin/TargetTool
-              cp target/target-tool-1.0.0.jar app/
-              ;;
-            windows-latest)
-              mkdir -p app/jre
-              jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
-              mkdir -p app/bin
-              echo '@echo off' > app/bin/TargetTool.bat
-              echo 'set DIR=%~dp0' >> app/bin/TargetTool.bat
-              echo 'call "%DIR%jre\bin\java.exe" -jar "%DIR%..\target-tool-1.0.0.jar" %*' >> app/bin/TargetTool.bat
-              cp target/target-tool-1.0.0.jar app/
-              ;;
-          esac
+          mkdir -p app/jre
+          jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+          mkdir -p app/bin
+          echo '#!/bin/bash' > app/bin/TargetTool
+          echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
+          echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
+          chmod +x app/bin/TargetTool
+          cp target/target-tool-1.0.0.jar app/
+          tar -czvf TargetTool-macos-latest.tar.gz app/
+
+      - name: Build and package on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          rm -rf app
+          mkdir -p app/jre
+          jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+          mkdir -p app/bin
+          echo '#!/bin/bash' > app/bin/TargetTool
+          echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
+          echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
+          chmod +x app/bin/TargetTool
+          cp target/target-tool-1.0.0.jar app/
+          tar -czvf TargetTool-ubuntu-latest.tar.gz app/
+
+      - name: Build and package on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          Remove-Item -Recurse -Force app -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path app/jre
+          jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+          New-Item -ItemType Directory -Path app/bin
+          '@echo off' | Out-File -FilePath app/bin/TargetTool.bat -Encoding ASCII
+          'set DIR=%~dp0' | Out-File -FilePath app/bin/TargetTool.bat -Append -Encoding ASCII
+          'call "%DIR%jre\bin\java.exe" -jar "%DIR%..\target-tool-1.0.0.jar" %*' | Out-File -FilePath app/bin/TargetTool.bat -Append -Encoding ASCII
+          Copy-Item target/target-tool-1.0.0.jar app/
+          Compress-Archive -Path app -DestinationPath TargetTool-windows-latest.zip
 
       - name: Create archive
         run: |
@@ -75,7 +81,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TargetTool-${{ matrix.os }}-jlink
-          path: TargetTool-*.tar.gz TargetTool-*.zip 2>/dev/null || out-*/*
+          path: TargetTool-*.tar.gz TargetTool-*.zip
 
   test:
     needs: build
