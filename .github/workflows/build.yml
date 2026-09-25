@@ -29,11 +29,11 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           rm -rf app
-          mkdir -p app/bin
-          jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+          mkdir -p app/bin app/runtime
+          jlink --add-modules ALL-MODULE-PATH --output app/runtime --strip-debug --compress=2 --no-header-files --no-man-pages
           echo '#!/bin/bash' > app/bin/TargetTool
           echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
-          echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
+          echo '"$DIR/../runtime/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
           chmod +x app/bin/TargetTool
           cp target/target-tool-1.0.0.jar app/
           tar -czvf TargetTool-macos-latest.tar.gz app/
@@ -42,11 +42,11 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           rm -rf app
-          mkdir -p app/bin
-          jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
+          mkdir -p app/bin app/runtime
+          jlink --add-modules ALL-MODULE-PATH --output app/runtime --strip-debug --compress=2 --no-header-files --no-man-pages
           echo '#!/bin/bash' > app/bin/TargetTool
           echo 'DIR="$(dirname "$0")"' >> app/bin/TargetTool
-          echo '"$DIR/jre/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
+          echo '"$DIR/../runtime/bin/java" -jar "$DIR/../target-tool-1.0.0.jar" "$@"' >> app/bin/TargetTool
           chmod +x app/bin/TargetTool
           cp target/target-tool-1.0.0.jar app/
           tar -czvf TargetTool-ubuntu-latest.tar.gz app/
@@ -55,12 +55,11 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           Remove-Item -Recurse -Force app -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Path app/jre
-          jlink --add-modules ALL-MODULE-PATH --output app/jre --strip-debug --compress=2 --no-header-files --no-man-pages
-          New-Item -ItemType Directory -Path app/bin
+          New-Item -ItemType Directory -Path app/bin,app/runtime
+          jlink --add-modules ALL-MODULE-PATH --output app/runtime --strip-debug --compress=2 --no-header-files --no-man-pages
           '@echo off' | Out-File -FilePath app/bin/TargetTool.bat -Encoding ASCII
           'set DIR=%~dp0' | Out-File -FilePath app/bin/TargetTool.bat -Append -Encoding ASCII
-          'call "%DIR%jre\bin\java.exe" -jar "%DIR%..\target-tool-1.0.0.jar" %*' | Out-File -FilePath app/bin/TargetTool.bat -Append -Encoding ASCII
+          'call "%DIR%..\runtime\bin\java.exe" -jar "%DIR%..\target-tool-1.0.0.jar" %*' | Out-File -FilePath app/bin/TargetTool.bat -Append -Encoding ASCII
           Copy-Item target/target-tool-1.0.0.jar app/
           Compress-Archive -Path app -DestinationPath TargetTool-windows-latest.zip
 
