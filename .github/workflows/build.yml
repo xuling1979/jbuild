@@ -27,6 +27,7 @@ jobs:
 
       - name: Build jlink for ${{ matrix.os }}
         run: |
+          rm -rf app
           case ${{ matrix.os }} in
             macos-latest)
               mkdir -p app/jre
