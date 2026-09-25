@@ -66,8 +66,13 @@ jobs:
           Copy-Item target/target-tool-1.0.0.jar app/
           Compress-Archive -Path app -DestinationPath TargetTool-windows-latest.zip
 
-      - name: List created files
-        run: ls -la *.tar.gz *.zip 2>/dev/null || ls -la
+      - name: List created files (macOS/Linux)
+        if: matrix.os != 'windows-latest'
+        run: ls -la *.tar.gz 2>/dev/null || echo "No tar.gz files found"
+
+      - name: List created files (Windows)
+        if: matrix.os == 'windows-latest'
+        run: dir *.zip 2>/dev/null || echo "No zip files found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
